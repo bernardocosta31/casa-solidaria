@@ -1,0 +1,487 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Home, Calendar, MessageCircle, BookHeart, User, 
+  Settings, Heart, ShieldAlert, CheckCircle, 
+  Smile, Frown, Meh, Sun, Moon, Coffee, Award,
+  ArrowRight, ArrowLeft, Phone, FileText, Send, MapPin, GraduationCap,
+  Volume2, Utensils, Users, Info
+} from 'lucide-react';
+
+// --- MOCK DATA ---
+
+const PROFILES_STUDENTS = [
+  { 
+    id: 1, 
+    name: "João Silva", 
+    age: 21, 
+    course: "Medicina", 
+    university: "FMUP",
+    interests: ["Xadrez", "História", "Cozinha"], 
+    bio: "Sou calmo, gosto de ouvir histórias e preciso de um lugar tranquilo para estudar.",
+    about: "Sou estudante do 4º ano de Medicina. Valorizo muito o silêncio e a organização. Cresci com os meus avós, por isso sinto-me muito confortável em conviver com pessoas mais velhas. Sei cozinhar pratos tradicionais e gosto de manter o espaço limpo.",
+    habits: ["Não fumador", "Estuda à noite", "Gosta de animais"],
+    avatar: "bg-blue-200" 
+  },
+  { 
+    id: 2, 
+    name: "Ana Beatriz", 
+    age: 23, 
+    course: "Belas Artes", 
+    university: "FBAUP",
+    interests: ["Pintura", "Jardinagem", "Música"], 
+    bio: "Adoro ajudar no jardim e procuro companhia para chás da tarde.", 
+    about: "Estudo pintura e procuro um ambiente inspirador. Sou muito calma e passo grande parte do dia a desenhar ou na faculdade. Adoraria ter um pequeno espaço no jardim para cuidar das minhas plantas e partilhar um chá ao final do dia.",
+    habits: ["Vegetariana", "Acorda cedo", "Não fumadora"],
+    avatar: "bg-pink-200" 
+  }
+];
+
+const PROFILES_SENIORS = [
+  { 
+    id: 1, 
+    name: "Dona Maria", 
+    age: 74, 
+    location: "Centro Histórico", 
+    interests: ["Jardinagem", "Tricô", "Contar Histórias"], 
+    bio: "Tenho um quarto vago e muita saudade de casa cheia. Faço ótimos bolos.", 
+    about: "Vivo nesta casa há 40 anos e sinto falta do movimento. O quarto disponível é luminoso e tem vista para o jardim. Procuro alguém que gosto de conversar, mas respeito muito a privacidade e os momentos de estudo.",
+    amenities: ["Wi-Fi Rápido", "Quarto Mobilado", "Jardim", "Máquina de Lavar"],
+    avatar: "bg-emerald-200" 
+  },
+  { 
+    id: 2, 
+    name: "Sr. Carlos", 
+    age: 81, 
+    location: "Boavista", 
+    interests: ["Xadrez", "Política", "Caminhadas"], 
+    bio: "Procuro um jovem respeitoso para partidas de xadrez e ajuda leve nas compras.", 
+    about: "Sou reformado da engenharia e gosto de manter a mente ativa. Vivo num apartamento amplo e procuro companhia para o jantar e ocasionalmente uma partida de xadrez. Ofereço um ambiente muito sossegado.",
+    amenities: ["Casa de Banho Privada", "Elevador", "Aquecimento Central", "TV Cabo"],
+    avatar: "bg-amber-200" 
+  }
+];
+
+const TASKS = [
+  { id: 1, title: "Jantar partilhado", time: "19:30", completed: false, type: "social" },
+  { id: 2, title: "Ajudar com compras pesadas", time: "Sábado", completed: true, type: "help" },
+  { id: 3, title: "Conversa no café", time: "16:00", completed: false, type: "social" }
+];
+
+// Reescrita Positiva e Não-Jurídica das Cláusulas
+const CONVIVENCIA_CLAUSES = [
+  { 
+    id: 1, 
+    category: "Descanso e Harmonia", 
+    icon: Volume2,
+    title: "Hora do Silêncio",
+    text: "Valorizamos o descanso um do outro. A partir das 22:30h, mantemos um ambiente mais calmo para que todos possam dormir ou estudar tranquilamente.",
+    agreed: false 
+  },
+  { 
+    id: 2, 
+    category: "Gastronomia", 
+    icon: Utensils,
+    title: "Cozinha Partilhada",
+    text: "A cozinha é o coração da casa! Podemos usá-la livremente, comprometendo-nos a deixá-la limpa e organizada para o próximo que a quiser utilizar.",
+    agreed: false 
+  },
+  { 
+    id: 3, 
+    category: "Social e Visitas", 
+    icon: Users,
+    title: "Novas Visitas",
+    text: "Adoramos conhecer pessoas novas! Combinamos sempre com antecedência quando quisermos trazer um amigo, garantindo que todos se sentem confortáveis.",
+    agreed: false 
+  },
+  { 
+    id: 4, 
+    category: "Ajuda Mútua", 
+    icon: Heart,
+    title: "Cuidar um do outro",
+    text: "Comprometemo-nos a dedicar pequenos momentos da semana para colaborar em tarefas simples (como compras ou jardinagem) e para uma boa conversa.",
+    agreed: false 
+  },
+  { 
+    id: 5, 
+    category: "Espaços Comuns", 
+    icon: Home,
+    title: "Uso da Sala de Estar",
+    text: "A sala é de todos. Sinta-se à vontade para ver televisão, ler um livro ou apenas relaxar, respeitando sempre o espaço pessoal de quem lá estiver.",
+    agreed: false 
+  },
+];
+
+// --- COMPONENTS ---
+
+const EmotionBadge = ({ mood }) => {
+  const colors = {
+    happy: "bg-green-100 text-green-700 border-green-200",
+    neutral: "bg-gray-100 text-gray-700 border-gray-200",
+    sad: "bg-blue-100 text-blue-700 border-blue-200",
+    anxious: "bg-orange-100 text-orange-700 border-orange-200"
+  };
+  return (
+    <span className={`px-2 py-1 rounded-full text-xs border ${colors[mood] || colors.neutral} flex items-center gap-1`}>
+      {mood === 'happy' && <Smile size={12} />}
+      {mood === 'sad' && <Frown size={12} />}
+      {mood === 'neutral' && <Meh size={12} />}
+      {mood.charAt(0).toUpperCase() + mood.slice(1)}
+    </span>
+  );
+};
+
+const Confetti = () => (
+  <div className="absolute inset-0 pointer-events-none flex justify-center items-start overflow-hidden z-50">
+    <div className="animate-bounce text-4xl mt-10">🎉</div>
+    <div className="animate-bounce text-4xl mt-20 delay-100">✨</div>
+    <div className="animate-bounce text-4xl mt-10 delay-200">🌟</div>
+  </div>
+);
+
+// --- MAIN APP COMPONENT ---
+
+export default function CasaSolidariaApp() {
+  const [userType, setUserType] = useState('student'); 
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [selectedProfile, setSelectedProfile] = useState(null); 
+  const [tasks, setTasks] = useState(TASKS);
+  const [mood, setMood] = useState(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [journalEntry, setJournalEntry] = useState("");
+  const [journalSaved, setJournalSaved] = useState(false);
+  const [chatMessage, setChatMessage] = useState("");
+  const [chatHistory, setChatHistory] = useState([
+    { sender: 'other', text: 'Olá! Tudo bem com o quarto?', mood: 'happy' }
+  ]);
+  const [contractItems, setContractItems] = useState(CONVIVENCIA_CLAUSES);
+
+  const theme = userType === 'student' 
+    ? { bg: 'bg-sky-50', primary: 'bg-sky-600', text: 'text-sky-900', card: 'bg-white', accent: 'text-sky-600' }
+    : { bg: 'bg-amber-50', primary: 'bg-emerald-600', text: 'text-emerald-900', card: 'bg-white', accent: 'text-emerald-600' };
+
+  const triggerConfetti = () => {
+    setShowConfetti(true);
+    setTimeout(() => setShowConfetti(false), 2000);
+  };
+
+  const toggleTask = (id) => {
+    setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+    if (!tasks.find(t => t.id === id).completed) triggerConfetti();
+  };
+
+  const handleSendMessage = () => {
+    if (chatMessage.trim()) {
+      setChatHistory([...chatHistory, { sender: 'me', text: chatMessage, mood: mood || 'neutral' }]);
+      setChatMessage("");
+    }
+  };
+
+  const toggleContractItem = (id) => {
+    setContractItems(contractItems.map(i => i.id === id ? { ...i, agreed: !i.agreed } : i));
+  };
+
+  // --- VIEWS ---
+
+  const renderDashboard = () => (
+    <div className="space-y-6 animate-fadeIn">
+      <div className={`${theme.card} p-6 rounded-3xl shadow-sm border border-slate-100`}>
+        <h2 className={`text-lg font-semibold ${theme.text} mb-4`}>Como se sente hoje?</h2>
+        <div className="flex justify-between gap-2">
+          {['happy', 'neutral', 'anxious', 'sad'].map((m) => (
+            <button 
+              key={m}
+              onClick={() => { setMood(m); triggerConfetti(); }}
+              className={`flex flex-col items-center p-3 rounded-2xl transition-all ${mood === m ? 'bg-slate-100 ring-2 ring-offset-1 ring-slate-300 transform scale-105' : 'hover:bg-slate-50'}`}
+            >
+              {m === 'happy' && <Smile className="text-green-500 mb-1" size={32} />}
+              {m === 'neutral' && <Meh className="text-gray-500 mb-1" size={32} />}
+              {m === 'anxious' && <Sun className="text-orange-500 mb-1" size={32} />}
+              {m === 'sad' && <Frown className="text-blue-500 mb-1" size={32} />}
+              <span className="text-xs text-slate-500 capitalize">{m === 'anxious' ? 'Ansioso' : m === 'happy' ? 'Feliz' : m === 'sad' ? 'Triste' : 'Neutro'}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <button onClick={() => setActiveTab('tasks')} className={`${theme.card} p-4 rounded-2xl shadow-sm border border-slate-100 text-left hover:shadow-md transition-shadow`}>
+          <div className={`${userType === 'student' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'} p-3 rounded-xl w-fit mb-3`}>
+            <Calendar size={24} />
+          </div>
+          <h3 className="font-bold text-slate-700">Tarefas</h3>
+          <p className="text-xs text-slate-500 mt-1">2 pendentes hoje</p>
+        </button>
+
+        <button onClick={() => setActiveTab('chat')} className={`${theme.card} p-4 rounded-2xl shadow-sm border border-slate-100 text-left hover:shadow-md transition-shadow`}>
+          <div className="bg-purple-100 text-purple-600 p-3 rounded-xl w-fit mb-3">
+            <MessageCircle size={24} />
+          </div>
+          <h3 className="font-bold text-slate-700">Chat</h3>
+          <p className="text-xs text-slate-500 mt-1">1 nova mensagem</p>
+        </button>
+      </div>
+
+      <div className="bg-gradient-to-r from-orange-100 to-amber-100 p-6 rounded-3xl shadow-sm">
+        <div className="flex items-start gap-4">
+          <Sun className="text-orange-500 shrink-0" />
+          <div>
+            <h3 className="font-bold text-orange-800 mb-1">Pensamento do Dia</h3>
+            <p className="text-orange-700 italic text-sm">"A melhor maneira de encontrar a si mesmo é perder-se no serviço aos outros."</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderMatchmaking = () => {
+    if (selectedProfile) {
+      const isStudentProfile = PROFILES_STUDENTS.some(p => p.id === selectedProfile.id);
+      return (
+        <div className="animate-fadeIn space-y-6 pb-20">
+          <button onClick={() => setSelectedProfile(null)} className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors font-medium mb-2">
+            <ArrowLeft size={20} /> Voltar à lista
+          </button>
+          <div className={`${theme.card} rounded-3xl p-6 shadow-md border border-slate-100 text-center relative overflow-hidden`}>
+            <div className={`absolute top-0 left-0 right-0 h-24 ${selectedProfile.avatar.replace('bg-', 'bg-opacity-50 bg-')}`}></div>
+            <div className="relative">
+              <div className={`w-24 h-24 mx-auto rounded-full ${selectedProfile.avatar} flex items-center justify-center text-4xl shadow-lg border-4 border-white mb-4`}>
+                {selectedProfile.name[0]}
+              </div>
+              <h2 className="text-2xl font-bold text-slate-800">{selectedProfile.name}</h2>
+              <p className="text-slate-500 flex items-center justify-center gap-2 mt-1">
+                 {isStudentProfile ? <><GraduationCap size={16} /> {selectedProfile.course}</> : <><MapPin size={16} /> {selectedProfile.location}</>} • {selectedProfile.age} anos
+              </p>
+            </div>
+          </div>
+          <div className="space-y-4">
+             <div className={`${theme.card} p-6 rounded-3xl border border-slate-100 shadow-sm`}>
+                <h3 className={`font-bold text-lg mb-3 ${theme.text}`}>Sobre Mim</h3>
+                <p className="text-slate-600 leading-relaxed text-sm">{selectedProfile.about || selectedProfile.bio}</p>
+             </div>
+             <div className={`${theme.card} p-6 rounded-3xl border border-slate-100 shadow-sm`}>
+                <h3 className={`font-bold text-lg mb-3 ${theme.text}`}>
+                  {isStudentProfile ? "Hábitos e Preferências" : "Comodidades da Casa"}
+                </h3>
+                <div className="grid grid-cols-1 gap-3">
+                  {(isStudentProfile ? selectedProfile.habits : selectedProfile.amenities)?.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+                      <div className={`w-8 h-8 rounded-full ${theme.bg} flex items-center justify-center ${theme.text}`}><CheckCircle size={16} /></div>
+                      <span className="text-slate-700 font-medium text-sm">{item}</span>
+                    </div>
+                  ))}
+                </div>
+             </div>
+          </div>
+          <button className={`w-full py-4 rounded-2xl font-bold text-white shadow-lg active:scale-95 transition-all ${theme.primary} flex items-center justify-center gap-2`}>
+             <Phone size={20} /> {isStudentProfile ? "Agendar Videochamada" : "Solicitar Visita"}
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4 animate-fadeIn">
+        <h2 className={`text-2xl font-bold ${theme.text} mb-2`}>
+          {userType === 'student' ? 'Encontre o seu Lar' : 'Encontre a sua Companhia'}
+        </h2>
+        {(userType === 'student' ? PROFILES_SENIORS : PROFILES_STUDENTS).map((profile) => (
+          <div key={profile.id} className={`${theme.card} rounded-3xl p-5 shadow-sm border border-slate-100 transition-all hover:shadow-md`}>
+            <div className="flex items-start gap-4">
+              <div className={`w-16 h-16 rounded-full ${profile.avatar} flex items-center justify-center text-2xl shadow-inner shrink-0`}>{profile.name[0]}</div>
+              <div className="flex-1">
+                <div className="flex justify-between items-start">
+                  <h3 className="font-bold text-lg text-slate-800">{profile.name}</h3>
+                  <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full">{profile.age} anos</span>
+                </div>
+                <p className="text-sm text-slate-500 mt-1">{userType === 'student' ? profile.location : profile.course}</p>
+              </div>
+            </div>
+            <p className="text-slate-600 text-sm mt-4 italic line-clamp-2">"{profile.bio}"</p>
+            <button onClick={() => setSelectedProfile(profile)} className={`w-full mt-4 py-3 rounded-xl font-semibold text-white shadow-md active:scale-95 transition-all ${theme.primary}`}>Ver Perfil Completo</button>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderContract = () => (
+    <div className="space-y-6 animate-fadeIn pb-24">
+      {/* Contract Welcome Card */}
+      <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-8 rounded-[2rem] text-white shadow-xl relative overflow-hidden">
+        <FileText className="absolute -right-4 -top-4 text-white/10" size={120} />
+        <div className="relative z-10">
+          <h2 className="text-2xl font-bold mb-2">Acordo de Convivência</h2>
+          <p className="text-indigo-100 text-sm leading-relaxed">
+            Não é um contrato jurídico, mas sim um compromisso de carinho e respeito mútuo para que a vossa convivência seja fantástica.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 px-2 text-slate-500 mb-2">
+        <Info size={16} />
+        <span className="text-xs font-medium italic">Clique em cada cláusula para concordar e selar o compromisso.</span>
+      </div>
+
+      <div className="space-y-4">
+        {contractItems.map((item) => (
+          <div 
+            key={item.id} 
+            onClick={() => toggleContractItem(item.id)}
+            className={`group p-5 rounded-3xl border transition-all cursor-pointer relative overflow-hidden ${item.agreed ? 'bg-white border-green-200 shadow-sm' : 'bg-white border-slate-100 shadow-sm hover:border-slate-300'}`}
+          >
+            {/* Status Indicator */}
+            <div className={`absolute top-0 left-0 w-1 h-full transition-colors ${item.agreed ? 'bg-green-500' : 'bg-slate-200 group-hover:bg-slate-400'}`}></div>
+
+            <div className="flex items-start gap-4">
+              <div className={`p-3 rounded-2xl shrink-0 transition-colors ${item.agreed ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-500'}`}>
+                <item.icon size={24} />
+              </div>
+              <div className="flex-1">
+                <div className="flex justify-between items-center mb-1">
+                  <span className={`text-[10px] font-bold uppercase tracking-wider ${item.agreed ? 'text-green-600' : 'text-slate-400'}`}>
+                    {item.category}
+                  </span>
+                  {item.agreed && <CheckCircle className="text-green-500" size={18} />}
+                </div>
+                <h3 className={`font-bold text-lg ${item.agreed ? 'text-green-900' : 'text-slate-800'}`}>
+                  {item.title}
+                </h3>
+                <p className={`text-sm mt-2 leading-relaxed ${item.agreed ? 'text-green-800/70' : 'text-slate-600'}`}>
+                  {item.text}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      {/* Floating Action Bar */}
+      <div className="fixed bottom-24 left-6 right-6 flex justify-center z-50">
+         <div className={`px-8 py-4 rounded-full text-sm font-bold shadow-2xl transition-all duration-500 flex items-center gap-3 ${contractItems.every(i => i.agreed) ? 'bg-green-600 text-white scale-100 translate-y-0' : 'bg-white text-slate-400 translate-y-20 opacity-0 pointer-events-none'}`}>
+            <Award size={20} />
+            Acordo Selado! Parabéns!
+         </div>
+      </div>
+    </div>
+  );
+
+  const renderTasks = () => (
+    <div className="space-y-6 animate-fadeIn">
+      <div className="flex justify-between items-center">
+        <h2 className={`text-2xl font-bold ${theme.text}`}>Agenda da Casa</h2>
+        <span className="text-sm text-slate-500">{new Date().toLocaleDateString('pt-PT')}</span>
+      </div>
+      <div className="space-y-3">
+        {tasks.map((task) => (
+          <div key={task.id} onClick={() => toggleTask(task.id)} className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center gap-4 ${task.completed ? 'bg-slate-50 border-slate-200 opacity-60' : `${theme.card} border-slate-100 shadow-sm hover:shadow-md`}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${task.completed ? 'bg-green-500 border-green-500 text-white' : 'border-slate-300 text-transparent'}`}><CheckCircle size={18} fill="currentColor" /></div>
+            <div className="flex-1">
+              <p className={`font-medium ${task.completed ? 'line-through text-slate-500' : 'text-slate-800'}`}>{task.title}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs text-slate-400 flex items-center gap-1"><ClockIcon /> {task.time}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderJournal = () => (
+    <div className="space-y-4 animate-fadeIn h-full flex flex-col">
+      <h2 className={`text-2xl font-bold ${theme.text}`}>Diário</h2>
+      <div className={`${theme.card} rounded-3xl p-6 shadow-sm border border-slate-100 flex-1 flex flex-col`}>
+        <textarea className="w-full flex-1 p-4 rounded-xl bg-slate-50 border-none resize-none focus:ring-2 focus:ring-sky-400 outline-none text-slate-700 mb-4" placeholder="Escreva aqui..." value={journalEntry} onChange={(e) => setJournalEntry(e.target.value)}></textarea>
+        <button onClick={() => { setJournalSaved(true); triggerConfetti(); }} className={`w-full py-4 rounded-xl font-bold text-white shadow-md transition-all ${journalSaved ? 'bg-green-500' : theme.primary}`}>Guardar</button>
+      </div>
+    </div>
+  );
+
+  const renderChat = () => (
+    <div className="flex flex-col h-full animate-fadeIn">
+      <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4 rounded-r-lg flex justify-between items-center shadow-sm">
+        <div><h3 className="font-bold text-red-800 text-sm">Apoio</h3><p className="text-red-700 text-xs">A equipa está aqui.</p></div>
+        <button className="bg-white text-red-600 px-3 py-2 rounded-lg text-xs font-bold shadow-sm border border-red-100 flex items-center gap-1"><ShieldAlert size={14} /> Alertar</button>
+      </div>
+      <div className="flex-1 overflow-y-auto space-y-4 p-2">
+        {chatHistory.map((msg, idx) => (
+          <div key={idx} className={`flex flex-col ${msg.sender === 'me' ? 'items-end' : 'items-start'}`}>
+            <div className={`max-w-[80%] p-4 rounded-2xl text-sm shadow-sm ${msg.sender === 'me' ? `${theme.primary} text-white rounded-br-none` : 'bg-white text-slate-700 border border-slate-100 rounded-bl-none'}`}>{msg.text}</div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 bg-white p-2 rounded-2xl shadow-md border border-slate-100 flex items-center gap-2">
+        <input type="text" value={chatMessage} onChange={(e) => setChatMessage(e.target.value)} placeholder="Mensagem..." className="flex-1 p-3 bg-transparent outline-none text-slate-700" onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()} />
+        <button onClick={handleSendMessage} className={`p-3 rounded-xl ${theme.primary} text-white`}><Send size={20} /></button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className={`min-h-screen ${theme.bg} font-sans pb-24 md:pb-0`}>
+      {showConfetti && <Confetti />}
+      <div className="bg-slate-900 text-slate-300 p-2 text-xs flex justify-between items-center px-4 sticky top-0 z-50 shadow-md">
+        <span>Modo Protótipo</span>
+        <div className="flex gap-2 bg-slate-800 p-1 rounded-lg">
+          <button onClick={() => setUserType('student')} className={`px-3 py-1 rounded-md transition-all ${userType === 'student' ? 'bg-sky-600 text-white font-bold' : ''}`}>Estudante</button>
+          <button onClick={() => setUserType('senior')} className={`px-3 py-1 rounded-md transition-all ${userType === 'senior' ? 'bg-emerald-600 text-white font-bold' : ''}`}>Idoso</button>
+        </div>
+      </div>
+
+      <div className="max-w-md mx-auto min-h-screen relative flex flex-col md:flex-row md:max-w-5xl md:gap-8 md:p-8">
+        <nav className="hidden md:flex flex-col w-64 h-[80vh] bg-white rounded-3xl p-6 shadow-xl sticky top-24">
+           <div className="mb-8 flex items-center gap-3">
+             <div className={`w-10 h-10 rounded-xl ${theme.primary} flex items-center justify-center text-white`}><Heart fill="currentColor" size={20} /></div>
+             <h1 className="font-bold text-xl text-slate-800">Casa<br/>Solidária</h1>
+           </div>
+           <div className="space-y-2 flex-1">
+             {[
+               { id: 'dashboard', icon: Home, label: 'Início' },
+               { id: 'matchmaking', icon: User, label: 'Pares' },
+               { id: 'tasks', icon: Calendar, label: 'Tarefas' },
+               { id: 'contract', icon: FileText, label: 'Acordo' },
+               { id: 'chat', icon: MessageCircle, label: 'Chat' },
+               { id: 'journal', icon: BookHeart, label: 'Diário' },
+             ].map((item) => (
+               <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center gap-4 p-4 rounded-xl transition-all font-medium ${activeTab === item.id ? `${theme.primary} text-white shadow-md` : 'text-slate-500 hover:bg-slate-50'}`}>
+                 <item.icon size={20} /> {item.label}
+               </button>
+             ))}
+           </div>
+        </nav>
+
+        <header className="md:hidden flex justify-between items-center p-6 bg-white shadow-sm sticky top-10 z-40 rounded-b-3xl mb-4">
+          <div><h1 className={`text-2xl font-bold ${theme.text}`}>Olá, {userType === 'student' ? 'João' : 'Maria'}</h1></div>
+          <div className={`w-10 h-10 rounded-full ${theme.primary} text-white flex items-center justify-center`}><User size={20} /></div>
+        </header>
+
+        <main className="flex-1 p-6 md:p-0 overflow-y-auto pb-28 md:pb-0">
+          {activeTab === 'dashboard' && renderDashboard()}
+          {activeTab === 'matchmaking' && renderMatchmaking()}
+          {activeTab === 'tasks' && renderTasks()}
+          {activeTab === 'journal' && renderJournal()}
+          {activeTab === 'chat' && renderChat()}
+          {activeTab === 'contract' && renderContract()}
+        </main>
+
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-6 py-4 flex justify-between items-center z-50 rounded-t-3xl shadow-lg">
+          {[
+            { id: 'dashboard', icon: Home },
+            { id: 'tasks', icon: Calendar },
+            { id: 'chat', icon: MessageCircle },
+            { id: 'journal', icon: BookHeart },
+            { id: 'contract', icon: FileText },
+          ].map((item) => (
+            <button key={item.id} onClick={() => setActiveTab(item.id)} className={`p-3 rounded-2xl transition-all ${activeTab === item.id ? `${theme.primary} text-white shadow-lg transform -translate-y-2` : 'text-slate-400'}`}>
+              <item.icon size={24} />
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const ClockIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+);
